@@ -110,3 +110,31 @@ _Preconditions_: If `t` is a non-const rvalue, `value_type` is _Cpp17MoveInserta
 otherwise, `value_type` is _Cpp17CopyInsertable_ into `X`.
 <ins>`Compare` induces a strict weak ordering on the set of values comprising the key of `t` and all the keys
 in `a`.</ins>
+* [associative.reqmts.general]/76 (`a.insert(i, j)`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `X` from `*i`.
+Neither `i` nor `j` are iterators into `a`.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising the keys in `[i, j)` and all the keys
+in `a`.</ins>
+* [associative.reqmts.general]/80 (`a.insert_range(rng)`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `X` from `*ranges​::​begin(rg)`.
+`rg` and `a` do not overlap.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising the keys in `rg` and all the keys
+in `a`.</ins>
+* [associative.reqmts.general]/85 (`a_uniq.insert(nh)`):
+_Preconditions_: `nh` is empty or `a_uniq.get_allocator() == nh.get_allocator()` is `true`.
+<ins>If `nh` is not empty, `Compare` induces a strict weak ordering on the set of values
+comprising the key of `nh` and all the keys in `a_uniq`.</ins>
+* [associative.reqmts.general]/90 (`a_eq.insert(nh)`):
+_Preconditions_: `nh` is empty or `a_eq.get_allocator() == nh.get_allocator()` is `true`.
+<ins>If `nh` is not empty, `Compare` induces a strict weak ordering on the set of values
+comprising the key of `nh` and all the keys in `a_eq`.</ins>
+* [associative.reqmts.general]/95 (`a.insert(p, nh)`):
+_Preconditions_: `nh` is empty or `a.get_allocator() == nh.get_allocator()` is `true`.
+<ins>If `nh` is not empty, `Compare` induces a strict weak ordering on the set of values
+comprising the key of `nh` and all the keys in `a`.</ins>
+* [associative.reqmts.general]/113 (`a.merge(a2)`):
+_Preconditions_: `a.get_allocator() == a2.get_allocator()` is `true`.
+<ins>`Compare` induces a strict weark ordering on the set of values comprising all
+the keys in `a` and all the keys in `a2`.</ins>
+
+
