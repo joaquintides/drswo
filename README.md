@@ -9,7 +9,7 @@ standard is to allow for the use of `std::set<double>` and other containers wher
 does not induce a full SWO on all possible values of `Key`, there are (at least) two possible
 relaxations of the original requirement:
 
-1. Let `K` be the (multi)set of keys in an associative container `a` at a given point in time:
+1. Let `K` be the set of keys in an associative container `a` at a given point in time:
 `Compare` induces a SWO on `K` and also on {`k`} ∪ `K` for any `k` involved in an attempted
 insertion into `a` (either successful or not).
 2. `Compare` induces a SWO on `K` and also on {`k`} ∪ `K` for any `k` involved in an attempted
@@ -113,12 +113,12 @@ in `a`.</ins>
 * [associative.reqmts.general]/76 (`a.insert(i, j)`):
 _Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `X` from `*i`.
 Neither `i` nor `j` are iterators into `a`.
-<ins>`Compare` induces a strict weak ordering on the set of values comprising the keys in `[i, j)` and all the keys
+<ins>`Compare` induces a strict weak ordering on the set of values comprising all the keys in `[i, j)` and all the keys
 in `a`.</ins>
 * [associative.reqmts.general]/80 (`a.insert_range(rng)`):
 _Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `X` from `*ranges​::​begin(rg)`.
 `rg` and `a` do not overlap.
-<ins>`Compare` induces a strict weak ordering on the set of values comprising the keys in `rg` and all the keys
+<ins>`Compare` induces a strict weak ordering on the set of values comprising all the keys in `rg` and all the keys
 in `a`.</ins>
 * [associative.reqmts.general]/85 (`a_uniq.insert(nh)`):
 _Preconditions_: `nh` is empty or `a_uniq.get_allocator() == nh.get_allocator()` is `true`.
