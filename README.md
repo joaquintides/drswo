@@ -34,7 +34,7 @@ see https://godbolt.org/z/789qr74es.
 Note, however, that the following pieces of code are _not_ UB:
 
 ```cpp
-// (B) Global binary search funtions
+// (B) Global binary search functions
 std::vector<double> v = {0.0, 3.0, 2.0, 1.0};
 std::sort(v.begin(), v.end());
 return std::upper_bound(v.begin(), v.end(), nan) == v.end(); // returns true
@@ -69,7 +69,7 @@ that `k` partition the range [`a.begin()`, `a.end()`)._
 is the most useful and reasonable interpretation. Some arguments in favor of this thesis:
 
 * Partition-based lookup semantics is maximally aligned and consistent with current
-requirements for global lookup algorithms and associative container heterogeneus lookup.
+requirements for global lookup algorithms and associative container heterogeneous lookup.
 In particular:
   * It makes (A) and (C) equivalent, which is a reasonable assumption any
     non-expert user could make.
@@ -121,7 +121,7 @@ when the _qualified-id_ `X​::​key_compare​::​is_transparent` is valid an
 ([temp.deduct]),</del>
 * [associative.reqmts.general]/7.17: `t` denotes a value of type `X​::​value_type`, <ins> and</ins>
 * [associative.reqmts.general]/7.18: <del>`k` denotes a value of type X​::​key_type, and</del>
-* [associative.reqmts.general]/7.23.2: `kx` is not convertible to either `iterator` or `const_iterator`; <del>and<del>
+* [associative.reqmts.general]/7.23.2: `kx` is not convertible to either `iterator` or `const_iterator`; <del>and</del>
 * Insert before [associative.reqmts.general]/7.24: <ins>-- if _qualified-id_
 `X​::​key_compare​::​is_transparent` is not valid or does not denote a type ([temp.deduct]), then
 `kl`, `ku`, `ke` and `kx` are of type `X​::​key_type`;
@@ -186,7 +186,7 @@ _Preconditions_: `nh` is empty or `a.get_allocator() == nh.get_allocator()` is `
 comprising the key of `nh` and all the keys in `a`.</ins>
 * [associative.reqmts.general]/113 (`a.merge(a2)`):
 _Preconditions_: `a.get_allocator() == a2.get_allocator()` is `true`.
-<ins>`Compare` induces a strict weark ordering on the set of values comprising all
+<ins>`Compare` induces a strict weak ordering on the set of values comprising all
 the keys in `a` and all the keys in `a2`.</ins>
 
 
