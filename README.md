@@ -27,9 +27,10 @@ return s.upper_bound(nan) == s.end();
 Under interpretation 1, (A) is correct and returns `true`, whereas under interpretation 2
 the code is UB because `std::less<double>` does not induce a SWO on {0.0, 1.0, 2.0, 3.0, NaN}.
 Currently, libstdc++, Microsoft's C++ Standard Library, and libc++ v21 or lower behave as if
-interpretation 1 is in effect. [Starting with version 22](https://github.com/llvm/llvm-project/pull/161366),
-libc++ goes with interpretation 2 and assumes (A) is UB (and the code in fact returns `false`),
-see https://godbolt.org/z/789qr74es.
+interpretation 1 is in effect. Starting with version 22, libc++
+[introduces optimizations](https://github.com/llvm/llvm-project/pull/161366) that implicily
+assume interpretation 2, and the code in fact returns `false`.
+See https://godbolt.org/z/789qr74es, where the different behaviors are shown side by side.
 
 Note, however, that the following pieces of code are _not_ UB:
 
@@ -54,7 +55,8 @@ The fact that (C) is well defined is an argument against interpretation 2, given
 
 The status quo (`Compare` must induce a full SWO on all possible values of `Key`)
 is unacceptably strict and hardly the intent of the standard. As reasonable interpretation
-is left open, we're beginning to see divergences between C++ standard library implementations.
+is left open, we're beginning to see observable divergences between C++ standard
+library implementations.
 
 **Arguments in favor of partition-based lookup semantics**
 
@@ -88,12 +90,18 @@ auto nan = std::numeric_limits<double>::quiet_NaN();
 return s.upper_bound(nan) == s.end();
 ```
 * In the [N1313](https://wg21.link/n1313) foundational paper where partition-based semantics
-was introduced, David Abrahams states that _"[s]trict weak ordering is a great concept for
+was first introduced, David Abrahams states that _"[s]trict weak ordering is a great concept for
 sorting, but maybe it's not appropriate for searching"_.
-In [N3465](https://wg21.link/n3465), an early version of the paper upon which heterogeneous
-lookup for associative containers was defined, the wording for non-heterogeneous lookup
-was indeed partition-based in accordance with Abrahams's conceptual setup (though this
-exact wording didn't make it into the standard as is, for reasons unknown to the author).
+N1313 informed the resolution of [LWG270](https://open-std.org/JTC1/SC22/WG21/docs/lwg-defects.html#270)
+("Binary search requirements overly strict"), whose rationale states that
+_"[t]he proposed resolution reinterprets binary search. Instead of thinking about searching
+for a value in a sorted range, we view that as an important special case of a more general
+algorithm: searching for the partition point in a partitioned range"_.
+* In [N2882](https://wg21.link/n2882) and [N3465](https://wg21.link/n3465), early versions of the
+paper upon which heterogeneous lookup for associative containers was defined
+([N3657](https://wg21.link/n3657)), the wording for non-heterogeneous lookup was indeed
+partition-based in accordance with Abrahams's conceptual setup (though this exact wording didn't
+make it into the standard as is, for reasons unknown to the author).
 * For a unique associative container `a`, if `Compare` induces a strict _partial_ order
 on all its possible key values, then partition-based lookup is well defined everywhere.
 Formally, if `Compare` is a SPO and a set `K` of keys is totally ordered wrt `Compare`
@@ -102,7 +110,7 @@ the range [`a.begin()`, `a.end()`) always satisfies), then `K` is partitioned by
 arbitrary `k` (proof trivial).
 * Beyond admittedly corner cases such as that of NaN, there are partial orders that
 directly benefit from partition-based semantics. For instance, if we have a set `s`
-of non-overlapping intervals ordered by their natural
+of non-overlapping interval objects ordered by their natural
 [_interval order_](https://en.wikipedia.org/wiki/Interval_order) (such as sported
 by [Boost.ICL](https://www.boost.org/doc/libs/latest/libs/icl/doc/html/index.html)),
 then `s.equal_range(i)` very intuitively returns the range of intervals in `s` that
@@ -188,5 +196,37 @@ comprising the key of `nh` and all the keys in `a`.</ins>
 _Preconditions_: `a.get_allocator() == a2.get_allocator()` is `true`.
 <ins>`Compare` induces a strict weak ordering on the set of values comprising all
 the keys in `a` and all the keys in `a2`.</ins>
-
-
+* [map.modifiers]/3 (`try_emplace`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `map` from
+`piecewise_construct, forward_as_tuple(k), forward_as_tuple(std::forward<Args>(args)...)`.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `k`
+and all the keys in `*this`.</ins>
+* [map.modifiers]/7 (key-moving `try_emplace`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `map` from
+`piecewise_construct, forward_as_tuple(std::move(k)), forward_as_tuple(std::forward<Args>(args)...)`.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `k`
+and all the keys in `*this`.</ins>
+* [map.modifiers]/12 (transparent `try_emplace`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `map` from
+`piecewise_construct, forward_as_tuple(std::forward<K>(k)), forward_as_tuple(std::forward<Args>(args)...)`.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `key_type(std::forward<K>(k))`
+and all the keys in `*this`.</ins>
+* [map.modifiers]/17 (`insert_or_assign`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `map` from
+`k, std::forward<M>(obj)`.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `k`
+and all the keys in `*this`.</ins>
+* [map.modifiers]/22 (key-moving `insert_or_assign`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `map` from
+`std::move(k), std::forward<M>(obj)`.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `k`
+and all the keys in `*this`.</ins>
+* [map.modifiers]/28 (transparent `insert_or_assign`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `map` from
+`std::forward<K>(k), std::forward<M>(obj)`.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `key_type(std::forward<K>(k))`
+and all the keys in `*this`.</ins>
+* [set.modifiers]/2 (transparent `insert`):
+_Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `set` from `std::forward<K>(x)`.
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `key_type(std::forward<K>(k))`
+and all the keys in `*this`.</ins>
