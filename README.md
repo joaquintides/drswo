@@ -15,28 +15,34 @@ insertion into `a` (either successful or not).
 2. `Compare` induces a SWO on `K` and also on {`k`} ∪ `K` for any `k` involved in an attempted
 insertion (either successful or not) _or_ a lookup operation.
 
-Under 2, the following code is UB:
+Now, consider the following code:
 
 ```cpp
 // (A)
 std::set<double> s = {0.0, 1.0, 2.0, 3.0};
 auto nan = std::numeric_limits<double>::quiet_NaN();
-s.upper_bound(nan);
+return s.upper_bound(nan) == s.end();
 ```
 
-because `std::less<double>` does not induce a SWO on {0.0, 1.0, 2.0, 3.0, NaN}. Note, however,
-that the following pieces of code are _not_ UB:
+Under interpretation 1, (A) is correct and returns `true`, whereas under interpretation 2
+the code is UB because `std::less<double>` does not induce a SWO on {0.0, 1.0, 2.0, 3.0, NaN}.
+Currently, libstdc++, Microsoft's C++ Standard Library, and libc++ v21 or lower behave as if
+interpretation 1 is in effect. [Starting with version 22](https://github.com/llvm/llvm-project/pull/161366),
+libc++ goes with interpretation 2 and assumes (A) is UB (and the code in fact returns `false`),
+see https://godbolt.org/z/789qr74es.
+
+Note, however, that the following pieces of code are _not_ UB:
 
 ```cpp
 // (B) Global binary search funtions
 std::vector<double> v = {0.0, 3.0, 2.0, 1.0};
-std::sort(v.begin(), b.end());
-std::upper_bound(v.begin(), v.end(), nan);
+std::sort(v.begin(), v.end());
+return std::upper_bound(v.begin(), v.end(), nan) == v.end(); // returns true
 ```
 ```cpp
 // (C) Heterogeneous lookup
 std::set<double, std::less<>> s = {0.0, 1.0, 2.0, 3.0};
-s.upper_bound(std::cref(nan));
+return s.upper_bound(std::cref(nan)) == s.end(); // returns true
 ```
 because `upper_bound` in (B) and (C) only requires that the passed key
 _partition_ the range where lookup happens, and ¬( · < NaN) partitions
@@ -46,20 +52,43 @@ the range `R` = [0.0, 1.0, 2.0, 3.0] into `R` and [] (see
 The fact that (C) is well defined is an argument against interpretation 2, given that
 (C) can be seen as a mere syntactic variation of (A).
 
-Currently, libstdc++, Microsoft's C++ Standard Library, and libc++ v21 or lower
-behave as if interpretation 1 is in effect. [Starting with version 22](https://github.com/llvm/llvm-project/pull/161366),
-libc++ goes with 2 and assumes (A) is UB.
-
 The status quo (`Compare` must induce a full SWO on all possible values of `Key`)
 is unacceptably strict and hardly the intent of the standard. As reasonable interpretation
 is left open, we're beginning to see divergences between C++ standard library implementations.
 
+**Arguments in favor of partition-based lookup semantics**
+
+We posit that interpretation 1, supplemented with partition-based requirements for
+non-heterogeneous lookup:
+
+_Let `K` be the set of keys in an associative container `a` at a given point in time:
+`Compare` induces a SWO on `K` and also on {`k`} ∪ `K` for any `k` involved in an attempted
+insertion into `a` (either successful or not). Non-heterogeneous lookup for `k` only requires
+that `k` partition the range [`a.begin()`, `a.end()`)._
+
+is the most useful and consistent interpretation. Some arguments in favor of this thesis:
+
+* Partition-based lookup semantics is maximally aligned and consistent with current
+requirements for global lookup algorithms and associative container heterogeneus lookup.
+In particular, it makes (A) and (C) equivalent, which is a reasonable assumption any
+non-expert user could make.
+* In the [N1313](https://wg21.link/n1313) foundational paper where partition-based semantics
+was introduced, David Abrahams states that _"[s]trict weak ordering is a great concept for
+sorting, but maybe it's not appropriate for searching"_.
+In [N3465](https://wg21.link/n3465), an early version of the paper upon which heterogeneous
+lookup for associative containers was defined, the wording for non-heterogeneous lookup
+was indeed partition-based in accordance with Abrahams's conceptual setup (though this
+exact wording didn't make it into the standard as is, for reasons unknown to the author).
+* For a unique associative container `a`, if `Compare` induces a strict _partial_ order
+on all its possible key values, then partition-based lookup is well defined everywhere.
+Formally, if `Compare` is a SPO and a set `K` of keys is totally ordered wrt `Compare`
+(i.e., `K` is a [_chain_](https://en.wikipedia.org/wiki/Total_order#Chains), which
+the range [`a.begin()`, `a.end()`) always satisfies), then `K` is partitioned by any
+arbitrary `k` (proof trivial).
+
 **Proposed resolution:**
 
-Relax/clarify the requirements along approach 1,
-which is maximally aligned with current requirements for global lookup algorithms
-and associative container heterogeneus lookup, and define lookup everywhere
-in terms of partitioning. Wording is relative to [N5032](https://wg21.link/n5032):
+Wording is relative to [N5032](https://wg21.link/n5032):
 
 * [associative.reqmts.general]/2: Each associative container is parameterized on `Key` and
 an ordering relation `Compare` that induces a strict weak ordering ([alg.sorting]) on
