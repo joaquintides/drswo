@@ -66,12 +66,27 @@ _Let `K` be the set of keys in an associative container `a` at a given point in 
 insertion into `a` (either successful or not). Non-heterogeneous lookup for `k` only requires
 that `k` partition the range [`a.begin()`, `a.end()`)._
 
-is the most useful and consistent interpretation. Some arguments in favor of this thesis:
+is the most useful and reasonable interpretation. Some arguments in favor of this thesis:
 
 * Partition-based lookup semantics is maximally aligned and consistent with current
 requirements for global lookup algorithms and associative container heterogeneus lookup.
-In particular, it makes (A) and (C) equivalent, which is a reasonable assumption any
-non-expert user could make.
+In particular:
+  * It makes (A) and (C) equivalent, which is a reasonable assumption any
+    non-expert user could make.
+  * It makes flat container adaptors truly equivalent to the manually-sorted vectors
+    they are meant to replace:
+```cpp
+// (D)
+std::vector<double> v = {3.0, 1.0, 0.0, 2.0};
+std::sort(v.begin(), v.end());
+auto nan = std::numeric_limits<double>::quiet_NaN();
+return std::upper_bound(v.begin(), v.end(), nan) == v.end();
+
+// (E) only well defined and equivalent to (D) if partition-based lookup is adopted
+std::flat_set<double> s = {3.0, 1.0, 0.0, 2.0};
+auto nan = std::numeric_limits<double>::quiet_NaN();
+return s.upper_bound(nan) == s.end();
+```
 * In the [N1313](https://wg21.link/n1313) foundational paper where partition-based semantics
 was introduced, David Abrahams states that _"[s]trict weak ordering is a great concept for
 sorting, but maybe it's not appropriate for searching"_.
@@ -85,6 +100,14 @@ Formally, if `Compare` is a SPO and a set `K` of keys is totally ordered wrt `Co
 (i.e., `K` is a [_chain_](https://en.wikipedia.org/wiki/Total_order#Chains), which
 the range [`a.begin()`, `a.end()`) always satisfies), then `K` is partitioned by any
 arbitrary `k` (proof trivial).
+* Beyond admittedly corner cases such as that of NaN, there are partial orders that
+directly benefit from partition-based semantics. For instance, if we have a set `s`
+of non-overlapping intervals ordered by their natural
+[_interval order_](https://en.wikipedia.org/wiki/Interval_order) (such as sported
+by [Boost.ICL](https://www.boost.org/doc/libs/latest/libs/icl/doc/html/index.html)),
+then `s.equal_range(i)` very intuitively returns the range of intervals in `s` that
+are _contained_ in `i`. Boost.ICL, in fact, implicitly relies on the interpretation
+of lookup semantics we're proposing here.
 
 **Proposed resolution:**
 
