@@ -113,9 +113,9 @@ directly benefit from partition-based semantics. For instance, if we have a set 
 of non-overlapping interval objects ordered by their natural
 [_interval order_](https://en.wikipedia.org/wiki/Interval_order) (such as sported
 by [Boost.ICL](https://www.boost.org/doc/libs/latest/libs/icl/doc/html/index.html)),
-then `s.equal_range(i)` very intuitively returns the range of intervals in `s` that
-are _contained_ in `i`. Boost.ICL, in fact, implicitly relies on the interpretation
-of lookup semantics we're proposing here.
+then `s.equal_range(i)` simply returns the range of intervals in `s` that are _contained_
+in `i`. Boost.ICL, in fact, implicitly relies on the interpretation of lookup semantics
+we're proposing here.
 
 **Proposed resolution:**
 
