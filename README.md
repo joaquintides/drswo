@@ -117,6 +117,14 @@ then `s.equal_range(i)` simply returns the range of intervals in `s` that are _c
 in `i`. Boost.ICL, in fact, implicitly relies on the interpretation of lookup semantics
 we're proposing here.
 
+On a related note, it may be worth mentioning that the standard text has some general formulation
+problems regarding the extent of applicability of semantic requirements (both for C++20
+`concept`s and pre-C++20 well-defined expression tables, collectively called _named requirements_).
+[[structure.requirements]/8](https://wg21.link/structure.requirements#8) tries to provide
+some leeway for the specific case of `concept`s in a manner described by
+[P2027R0](https://wg21.link/p2027r0), section "This is a special case of a much bigger problem",
+as _"little more than handwaving"_.
+
 **Proposed resolution:**
 
 Wording is relative to [N5032](https://wg21.link/n5032):
