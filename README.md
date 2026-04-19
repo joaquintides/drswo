@@ -232,9 +232,9 @@ and all the keys in `*this`.</ins>
 * [map.modifiers]/28 (transparent `insert_or_assign`):
 _Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `map` from
 `std::forward<K>(k), std::forward<M>(obj)`.
-<ins>`Compare` induces a strict weak ordering on the set of values comprising `key_type(std::forward<K>(k))`
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `k`
 and all the keys in `*this`.</ins>
 * [set.modifiers]/2 (transparent `insert`):
 _Preconditions_: `value_type` is _Cpp17EmplaceConstructible_ into `set` from `std::forward<K>(x)`.
-<ins>`Compare` induces a strict weak ordering on the set of values comprising `key_type(std::forward<K>(k))`
+<ins>`Compare` induces a strict weak ordering on the set of values comprising `k`
 and all the keys in `*this`.</ins>
